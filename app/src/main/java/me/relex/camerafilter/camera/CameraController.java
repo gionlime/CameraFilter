@@ -8,10 +8,12 @@ import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,27 +29,27 @@ public class CameraController
 
     public static final int TYPE_OPEN_CAMERA_ERROR_UNKNOWN = 0;
     public static final int TYPE_OPEN_CAMERA_ERROR_PERMISSION_DISABLE = 1;
-
-    private static volatile CameraController sInstance;
-
     public final static float sCameraRatio = 4f / 3f;
+    private static final int RESET_TOUCH_FOCUS = 301;
+    private static final int RESET_TOUCH_FOCUS_DELAY = 3000;
+    private static volatile CameraController sInstance;
     private final CameraControllerHandler mHandler;
-
-    private Camera mCamera = null;
+    private final Object mLock = new Object();
     public int mCameraIndex = Camera.CameraInfo.CAMERA_FACING_BACK;
     public boolean mIsSupportFontFacingCamera = false;
     public boolean mCameraMirrored = false;
     public Camera.Size mCameraPictureSize;
-
-    private final Object mLock = new Object();
-
+    private Camera mCamera = null;
     //////////
     private boolean mAutoFocusLocked = false;
     private boolean mIsSupportAutoFocus = false;
     private boolean mIsSupportAutoFocusContinuousPicture = false;
-
     private CameraPictureSizeComparator mCameraPictureSizeComparator =
             new CameraPictureSizeComparator();
+
+    private CameraController() {
+        mHandler = new CameraControllerHandler(this);
+    }
 
     //////////
     public static CameraController getInstance() {
@@ -59,10 +61,6 @@ public class CameraController
             }
         }
         return sInstance;
-    }
-
-    private CameraController() {
-        mHandler = new CameraControllerHandler(this);
     }
 
     public boolean checkSupportFontFacingCamera(boolean frontPriority) {
@@ -86,7 +84,7 @@ public class CameraController
     }
 
     public void setupCamera(SurfaceTexture surfaceTexture, Context context,
-            int desiredPictureWidth) {
+                            int desiredPictureWidth) {
         if (mCamera != null) {
             release();
         }
@@ -291,6 +289,8 @@ public class CameraController
         return null;
     }
 
+    //////////////////// implements ////////////////////
+
     private void findCameraSupportValue(int desiredWidth) {
         Camera.Parameters cp = getCameraParameters();
         List<Camera.Size> cs = cp.getSupportedPictureSizes();
@@ -309,25 +309,10 @@ public class CameraController
     }
 
     public void takePicture(Camera.ShutterCallback shutter, Camera.PictureCallback raw,
-            Camera.PictureCallback jpeg) {
+                            Camera.PictureCallback jpeg) {
         if (mCamera != null) {
             mCamera.takePicture(shutter, raw, jpeg);
         }
-    }
-
-    //////////////////// implements ////////////////////
-
-    //AutoFocusCallback
-    @Override public void onAutoFocus(boolean success, Camera camera) {
-
-        mHandler.sendEmptyMessageDelayed(RESET_TOUCH_FOCUS, RESET_TOUCH_FOCUS_DELAY);
-
-        mAutoFocusLocked = false;
-    }
-
-    //ErrorCallback
-    @Override public void onError(int error, Camera camera) {
-
     }
 
     //PictureCallback
@@ -363,6 +348,21 @@ public class CameraController
 
     //////////////////// Getter & Setter ////////////////////
 
+    //AutoFocusCallback
+    @Override
+    public void onAutoFocus(boolean success, Camera camera) {
+
+        mHandler.sendEmptyMessageDelayed(RESET_TOUCH_FOCUS, RESET_TOUCH_FOCUS_DELAY);
+
+        mAutoFocusLocked = false;
+    }
+
+    //ErrorCallback
+    @Override
+    public void onError(int error, Camera camera) {
+
+    }
+
     public Camera getCamera() {
         return mCamera;
     }
@@ -379,24 +379,8 @@ public class CameraController
         return mIsSupportFontFacingCamera;
     }
 
-    private static final int RESET_TOUCH_FOCUS = 301;
-    private static final int RESET_TOUCH_FOCUS_DELAY = 3000;
-
-    private static class CameraControllerHandler extends Handler {
-
-        private CommonHandlerListener listener;
-
-        public CameraControllerHandler(CommonHandlerListener listener) {
-            super(Looper.getMainLooper());
-            this.listener = listener;
-        }
-
-        @Override public void handleMessage(Message msg) {
-            listener.handleMessage(msg);
-        }
-    }
-
-    @Override public void handleMessage(Message msg) {
+    @Override
+    public void handleMessage(Message msg) {
         switch (msg.what) {
             case RESET_TOUCH_FOCUS: {
                 if (mCamera == null || mAutoFocusLocked) {
@@ -418,6 +402,21 @@ public class CameraController
 
                 break;
             }
+        }
+    }
+
+    private static class CameraControllerHandler extends Handler {
+
+        private CommonHandlerListener listener;
+
+        public CameraControllerHandler(CommonHandlerListener listener) {
+            super(Looper.getMainLooper());
+            this.listener = listener;
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            listener.handleMessage(msg);
         }
     }
 }

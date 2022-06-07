@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.opengl.GLES20;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -11,6 +12,7 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+
 import me.relex.camerafilter.R;
 import me.relex.camerafilter.gles.GlUtil;
 
@@ -40,18 +42,21 @@ public class CameraFilterToneCurve extends CameraFilter {
         mToneCurveTextureId = GlUtil.createTexture(GLES20.GL_TEXTURE_2D);
     }
 
-    @Override protected int createProgram(Context applicationContext) {
+    @Override
+    protected int createProgram(Context applicationContext) {
         return GlUtil.createProgram(applicationContext, R.raw.vertex_shader,
                 R.raw.fragment_shader_ext_tone_curve);
     }
 
-    @Override protected void getGLSLValues() {
+    @Override
+    protected void getGLSLValues() {
         super.getGLSLValues();
 
         muToneCurveTextureLoc = GLES20.glGetUniformLocation(mProgramHandle, "toneCurveTexture");
     }
 
-    @Override protected void bindTexture(int textureId) {
+    @Override
+    protected void bindTexture(int textureId) {
 
         super.bindTexture(textureId);
 
@@ -89,7 +94,7 @@ public class CameraFilterToneCurve extends CameraFilter {
 
     @Override
     protected void bindGLSLValues(float[] mvpMatrix, FloatBuffer vertexBuffer, int coordsPerVertex,
-            int vertexStride, float[] texMatrix, FloatBuffer texBuffer, int texStride) {
+                                  int vertexStride, float[] texMatrix, FloatBuffer texBuffer, int texStride) {
         super.bindGLSLValues(mvpMatrix, vertexBuffer, coordsPerVertex, vertexStride, texMatrix,
                 texBuffer, texStride);
         //GLES20.glEnableVertexAttribArray(maExtraTextureCoordLoc);
@@ -99,13 +104,15 @@ public class CameraFilterToneCurve extends CameraFilter {
 
     }
 
-    @Override protected void unbindGLSLValues() {
+    @Override
+    protected void unbindGLSLValues() {
         super.unbindGLSLValues();
 
         //GLES20.glDisableVertexAttribArray(maExtraTextureCoordLoc);
     }
 
-    @Override protected void unbindTexture() {
+    @Override
+    protected void unbindTexture() {
         super.unbindTexture();
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
     }
@@ -184,7 +191,8 @@ public class CameraFilterToneCurve extends CameraFilter {
         // Sort the array
         PointF[] pointsSorted = points.clone();
         Arrays.sort(pointsSorted, new Comparator<PointF>() {
-            @Override public int compare(PointF point1, PointF point2) {
+            @Override
+            public int compare(PointF point1, PointF point2) {
                 if (point1.x < point2.x) {
                     return -1;
                 } else if (point1.x > point2.x) {

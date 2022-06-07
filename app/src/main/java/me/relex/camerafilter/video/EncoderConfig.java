@@ -5,6 +5,7 @@ package me.relex.camerafilter.video;
  */
 
 import android.opengl.EGLContext;
+
 import java.io.File;
 
 /**

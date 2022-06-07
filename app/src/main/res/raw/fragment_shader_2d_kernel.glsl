@@ -1,6 +1,6 @@
 #define KERNEL_SIZE 9
 
-precision highp float; //指定默认精度
+precision highp float;//指定默认精度
 
 varying vec2 vTextureCoord;
 uniform sampler2D uTexture;

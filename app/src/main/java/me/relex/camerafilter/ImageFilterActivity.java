@@ -5,9 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import me.relex.camerafilter.filter.FilterManager;
 import me.relex.camerafilter.image.ImageEglSurface;
 import me.relex.camerafilter.image.ImageRenderer;
@@ -18,7 +20,8 @@ public class ImageFilterActivity extends AppCompatActivity implements View.OnCli
     private ImageRenderer mImageRenderer;
     private FilterTask mFilterTask;
 
-    @Override protected void onCreate(Bundle savedInstanceState) {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_filter);
 
@@ -32,7 +35,8 @@ public class ImageFilterActivity extends AppCompatActivity implements View.OnCli
                 new ImageRenderer(getApplicationContext(), FilterManager.FilterType.Normal);
     }
 
-    @Override public void onClick(View v) {
+    @Override
+    public void onClick(View v) {
         switch (v.getId()) {
             case R.id.filter_normal:
                 startFilterTask(FilterManager.FilterType.Normal);
@@ -60,13 +64,14 @@ public class ImageFilterActivity extends AppCompatActivity implements View.OnCli
         private ImageRenderer mRenderer;
 
         public FilterTask(Context context, ImageRenderer renderer,
-                FilterManager.FilterType filterType) {
+                          FilterManager.FilterType filterType) {
             mFilterType = filterType;
             mContext = context;
             mRenderer = renderer;
         }
 
-        @Override protected Bitmap doInBackground(Void... params) {
+        @Override
+        protected Bitmap doInBackground(Void... params) {
             final BitmapFactory.Options options = new BitmapFactory.Options();
             options.inScaled = false;
             final Bitmap bitmap =
@@ -85,7 +90,8 @@ public class ImageFilterActivity extends AppCompatActivity implements View.OnCli
             return filterBitmap;
         }
 
-        @Override protected void onPostExecute(Bitmap bitmap) {
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
 
             if (bitmap == null) {

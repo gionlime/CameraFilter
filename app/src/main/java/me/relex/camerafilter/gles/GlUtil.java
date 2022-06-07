@@ -21,9 +21,11 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.RawRes;
-import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,18 +35,19 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 public class GlUtil {
-    private static final String TAG = "GlUtil";
-    /** Identity matrix for general use.  Don't modify or life will get weird. */
+    /**
+     * Identity matrix for general use.  Don't modify or life will get weird.
+     */
 
     public static final int NO_TEXTURE = -1;
-
+    private static final String TAG = "GlUtil";
     private static final int SIZEOF_FLOAT = 4;
 
     private GlUtil() { // do not instantiate
     }
 
     public static int createProgram(Context applicationContext, @RawRes int vertexSourceRawId,
-            @RawRes int fragmentSourceRawId) {
+                                    @RawRes int fragmentSourceRawId) {
 
         String vertexSource = readTextFromRawResource(applicationContext, vertexSourceRawId);
         String fragmentSource = readTextFromRawResource(applicationContext, fragmentSourceRawId);
@@ -100,16 +103,16 @@ public class GlUtil {
 
     /**
      * @param textureTarget Texture类型。
-     * 1. 相机用 GLES11Ext.GL_TEXTURE_EXTERNAL_OES
-     * 2. 图片用GLES20.GL_TEXTURE_2D
-     * @param minFilter 缩小过滤类型 (1.GL_NEAREST ; 2.GL_LINEAR)
-     * @param magFilter 放大过滤类型
-     * @param wrapS X方向边缘环绕
-     * @param wrapT Y方向边缘环绕
+     *                      1. 相机用 GLES11Ext.GL_TEXTURE_EXTERNAL_OES
+     *                      2. 图片用GLES20.GL_TEXTURE_2D
+     * @param minFilter     缩小过滤类型 (1.GL_NEAREST ; 2.GL_LINEAR)
+     * @param magFilter     放大过滤类型
+     * @param wrapS         X方向边缘环绕
+     * @param wrapT         Y方向边缘环绕
      * @return 返回创建的 Texture ID
      */
     public static int createTexture(int textureTarget, @Nullable Bitmap bitmap, int minFilter,
-            int magFilter, int wrapS, int wrapT) {
+                                    int magFilter, int wrapS, int wrapT) {
         int[] textureHandle = new int[1];
 
         GLES20.glGenTextures(1, textureHandle, 0);
@@ -177,7 +180,7 @@ public class GlUtil {
     }
 
     public static String readTextFromRawResource(final Context applicationContext,
-            @RawRes final int resourceId) {
+                                                 @RawRes final int resourceId) {
         final InputStream inputStream =
                 applicationContext.getResources().openRawResource(resourceId);
         final InputStreamReader inputStreamReader = new InputStreamReader(inputStream);

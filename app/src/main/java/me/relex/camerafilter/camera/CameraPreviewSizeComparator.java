@@ -1,6 +1,7 @@
 package me.relex.camerafilter.camera;
 
 import android.hardware.Camera;
+
 import java.util.Comparator;
 
 public class CameraPreviewSizeComparator implements Comparator<Camera.Size> {

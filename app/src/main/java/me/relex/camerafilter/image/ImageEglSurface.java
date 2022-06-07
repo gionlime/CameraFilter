@@ -1,20 +1,22 @@
 package me.relex.camerafilter.image;
 
+import static javax.microedition.khronos.egl.EGL10.EGL_NO_CONTEXT;
+
 import android.graphics.Bitmap;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.egl.EGLSurface;
 import javax.microedition.khronos.opengles.GL10;
-
-import static javax.microedition.khronos.egl.EGL10.EGL_NO_CONTEXT;
 
 // 类似 EglCore 和 EglSurfaceBase，不过EglCore使用EGL14，而这里图片滤镜可以拆处理兼容法低版本，所以重新写了个，使用EGL10
 // 需要放到同一个线程中处理

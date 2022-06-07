@@ -23,9 +23,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+
 import me.relex.camerafilter.filter.FilterManager;
 import me.relex.camerafilter.filter.FilterManager.FilterType;
 import me.relex.camerafilter.gles.FullFrameRect;
@@ -52,7 +54,7 @@ import me.relex.camerafilter.gles.FullFrameRect;
  * <li>for each frame, after latching it with SurfaceTexture#updateTexImage(),
  * call TextureMovieEncoder#frameAvailable().
  * </ul>
- *
+ * <p>
  * TODO: tweak the API (esp. textureId) so it's less awkward for simple use cases.
  */
 public class TextureMovieEncoder implements Runnable {
@@ -66,7 +68,8 @@ public class TextureMovieEncoder implements Runnable {
     private static final int MSG_UPDATE_SHARED_CONTEXT = 6;
     private static final int MSG_UPDATE_FILTER = 7;
     private static final int MSG_QUIT = 8;
-
+    private volatile static TextureMovieEncoder sInstance;
+    private final Object mReadyFence = new Object();      // guards ready/running
     // ----- accessed exclusively by encoder thread -----
     private WindowSurface mInputWindowSurface;
     private EglCore mEglCore;
@@ -74,17 +77,16 @@ public class TextureMovieEncoder implements Runnable {
     private int mTextureId;
     private VideoEncoderCore mVideoEncoder;
     private FilterType mCurrentFilterType;
-
     // ----- accessed by multiple threads -----
     private volatile EncoderHandler mHandler;
-
-    private final Object mReadyFence = new Object();      // guards ready/running
     private boolean mReady;
     private boolean mRunning;
-
     // ----- Instance-----
     private Context mContext;
-    private volatile static TextureMovieEncoder sInstance;
+
+    private TextureMovieEncoder(Context applicationContext) {
+        mContext = applicationContext;
+    }
 
     public static void initialize(Context applicationContext) {
         if (sInstance == null) {
@@ -98,10 +100,6 @@ public class TextureMovieEncoder implements Runnable {
 
     public static TextureMovieEncoder getInstance() {
         return sInstance;
-    }
-
-    private TextureMovieEncoder(Context applicationContext) {
-        mContext = applicationContext;
     }
 
     /**
@@ -235,7 +233,8 @@ public class TextureMovieEncoder implements Runnable {
      *
      * @see Thread#run()
      */
-    @Override public void run() {
+    @Override
+    public void run() {
         // Establish a Looper for this thread, and define a Handler for it.
         Looper.prepare();
         synchronized (mReadyFence) {
@@ -249,6 +248,116 @@ public class TextureMovieEncoder implements Runnable {
         synchronized (mReadyFence) {
             mReady = mRunning = false;
             mHandler = null;
+        }
+    }
+
+    /**
+     * Starts recording.
+     */
+    private void handleStartRecording(EncoderConfig config) {
+        Log.d(TAG, "handleStartRecording " + config);
+        prepareEncoder(config.mEglContext, config.mWidth, config.mHeight, config.mBitRate,
+                config.mOutputFile);
+    }
+
+    /**
+     * Handles notification of an available frame.
+     * <p>
+     * The texture is rendered onto the encoder's input surface, along with a moving
+     * box (just because we can).
+     * <p>
+     *
+     * @param transform      The texture transform, from SurfaceTexture.
+     * @param timestampNanos The frame's timestamp, from SurfaceTexture.
+     */
+    private void handleFrameAvailable(float[] transform, long timestampNanos) {
+        //if (VERBOSE) Log.d(TAG, "handleFrameAvailable tr=" + transform);
+        mVideoEncoder.drainEncoder(false);
+        mFullScreen.drawFrame(mTextureId, transform);
+        mInputWindowSurface.setPresentationTime(timestampNanos);
+        mInputWindowSurface.swapBuffers();
+    }
+
+    /**
+     * Handles a request to stop encoding.
+     */
+    private void handleStopRecording() {
+        Log.d(TAG, "handleStopRecording");
+        mVideoEncoder.drainEncoder(true);
+        releaseEncoder();
+    }
+
+    private void handleSaleMVPMatrix(PointF pointF) {
+        mFullScreen.scaleMVPMatrix(pointF.x, pointF.y);
+    }
+
+    /**
+     * Sets the texture name that SurfaceTexture will use when frames are received.
+     */
+    private void handleSetTexture(int id) {
+        //Log.d(TAG, "handleSetTexture " + id);
+        mTextureId = id;
+    }
+
+    /**
+     * Tears down the EGL surface and context we've been using to feed the MediaCodec input
+     * surface, and replaces it with a new one that shares with the new context.
+     * <p>
+     * This is useful if the old context we were sharing with went away (maybe a GLSurfaceView
+     * that got torn down) and we need to hook up with the new one.
+     */
+    private void handleUpdateSharedContext(EGLContext newSharedContext) {
+        Log.d(TAG, "handleUpdatedSharedContext " + newSharedContext);
+
+        // Release the EGLSurface and EGLContext.
+        mInputWindowSurface.releaseEglSurface();
+        mFullScreen.release(false);
+        mEglCore.release();
+
+        // Create a new EGLContext and recreate the window surface.
+        mEglCore = new EglCore(newSharedContext, EglCore.FLAG_RECORDABLE);
+        mInputWindowSurface.recreate(mEglCore);
+        mInputWindowSurface.makeCurrent();
+
+        // Create new programs and such for the new context.
+        mFullScreen = new FullFrameRect(FilterManager.getCameraFilter(mCurrentFilterType, mContext));
+    }
+
+    private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
+                                File outputFile) {
+        try {
+            mVideoEncoder = new VideoEncoderCore(width, height, bitRate, outputFile);
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+
+        mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
+        mInputWindowSurface = new WindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);
+        mInputWindowSurface.makeCurrent();
+
+        mFullScreen = new FullFrameRect(FilterManager.getCameraFilter(mCurrentFilterType, mContext));
+    }
+
+    private void handleUpdateFilter(FilterType filterType) {
+        if (mFullScreen != null && filterType != mCurrentFilterType) {
+            mFullScreen.changeProgram(FilterManager.getCameraFilter(filterType, mContext));
+            mCurrentFilterType = filterType;
+        }
+    }
+
+    private void releaseEncoder() {
+        mVideoEncoder.release();
+        if (mInputWindowSurface != null) {
+            mInputWindowSurface.release();
+            mInputWindowSurface = null;
+        }
+        if (mFullScreen != null) {
+            mFullScreen.release(false);
+            mFullScreen = null;
+        }
+        if (mEglCore != null) {
+            mEglCore.release();
+            mEglCore = null;
         }
     }
 
@@ -311,116 +420,6 @@ public class TextureMovieEncoder implements Runnable {
                 default:
                     throw new RuntimeException("Unhandled msg what=" + what);
             }
-        }
-    }
-
-    /**
-     * Starts recording.
-     */
-    private void handleStartRecording(EncoderConfig config) {
-        Log.d(TAG, "handleStartRecording " + config);
-        prepareEncoder(config.mEglContext, config.mWidth, config.mHeight, config.mBitRate,
-                config.mOutputFile);
-    }
-
-    /**
-     * Handles notification of an available frame.
-     * <p>
-     * The texture is rendered onto the encoder's input surface, along with a moving
-     * box (just because we can).
-     * <p>
-     *
-     * @param transform The texture transform, from SurfaceTexture.
-     * @param timestampNanos The frame's timestamp, from SurfaceTexture.
-     */
-    private void handleFrameAvailable(float[] transform, long timestampNanos) {
-        //if (VERBOSE) Log.d(TAG, "handleFrameAvailable tr=" + transform);
-        mVideoEncoder.drainEncoder(false);
-        mFullScreen.drawFrame(mTextureId, transform);
-        mInputWindowSurface.setPresentationTime(timestampNanos);
-        mInputWindowSurface.swapBuffers();
-    }
-
-    /**
-     * Handles a request to stop encoding.
-     */
-    private void handleStopRecording() {
-        Log.d(TAG, "handleStopRecording");
-        mVideoEncoder.drainEncoder(true);
-        releaseEncoder();
-    }
-
-    private void handleSaleMVPMatrix(PointF pointF) {
-        mFullScreen.scaleMVPMatrix(pointF.x, pointF.y);
-    }
-
-    /**
-     * Sets the texture name that SurfaceTexture will use when frames are received.
-     */
-    private void handleSetTexture(int id) {
-        //Log.d(TAG, "handleSetTexture " + id);
-        mTextureId = id;
-    }
-
-    /**
-     * Tears down the EGL surface and context we've been using to feed the MediaCodec input
-     * surface, and replaces it with a new one that shares with the new context.
-     * <p>
-     * This is useful if the old context we were sharing with went away (maybe a GLSurfaceView
-     * that got torn down) and we need to hook up with the new one.
-     */
-    private void handleUpdateSharedContext(EGLContext newSharedContext) {
-        Log.d(TAG, "handleUpdatedSharedContext " + newSharedContext);
-
-        // Release the EGLSurface and EGLContext.
-        mInputWindowSurface.releaseEglSurface();
-        mFullScreen.release(false);
-        mEglCore.release();
-
-        // Create a new EGLContext and recreate the window surface.
-        mEglCore = new EglCore(newSharedContext, EglCore.FLAG_RECORDABLE);
-        mInputWindowSurface.recreate(mEglCore);
-        mInputWindowSurface.makeCurrent();
-
-        // Create new programs and such for the new context.
-        mFullScreen = new FullFrameRect(FilterManager.getCameraFilter(mCurrentFilterType, mContext));
-    }
-
-    private void prepareEncoder(EGLContext sharedContext, int width, int height, int bitRate,
-            File outputFile) {
-        try {
-            mVideoEncoder = new VideoEncoderCore(width, height, bitRate, outputFile);
-        } catch (IOException ioe) {
-            throw new RuntimeException(ioe);
-        }
-
-        mEglCore = new EglCore(sharedContext, EglCore.FLAG_RECORDABLE);
-        mInputWindowSurface = new WindowSurface(mEglCore, mVideoEncoder.getInputSurface(), true);
-        mInputWindowSurface.makeCurrent();
-
-        mFullScreen = new FullFrameRect(FilterManager.getCameraFilter(mCurrentFilterType, mContext));
-    }
-
-    private void handleUpdateFilter(FilterType filterType) {
-        if (mFullScreen != null && filterType != mCurrentFilterType) {
-            mFullScreen.changeProgram(FilterManager.getCameraFilter(filterType, mContext));
-            mCurrentFilterType = filterType;
-        }
-    }
-
-    private void releaseEncoder() {
-        mVideoEncoder.release();
-        if (mInputWindowSurface != null) {
-            mInputWindowSurface.release();
-            mInputWindowSurface = null;
-        }
-        if (mFullScreen != null) {
-            mFullScreen.release(false);
-            mFullScreen = null;
-        }
-        if (mEglCore != null) {
-            mEglCore.release();
-            mEglCore = null;
         }
     }
 }

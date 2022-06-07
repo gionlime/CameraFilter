@@ -4,8 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+
 import androidx.annotation.DrawableRes;
+
 import java.nio.FloatBuffer;
+
 import me.relex.camerafilter.R;
 import me.relex.camerafilter.gles.GlUtil;
 
@@ -24,18 +27,21 @@ public class CameraFilterBlend extends CameraFilter {
         mExtraTextureId = GlUtil.createTexture(GLES20.GL_TEXTURE_2D, bitmap);
     }
 
-    @Override protected int createProgram(Context applicationContext) {
+    @Override
+    protected int createProgram(Context applicationContext) {
         return GlUtil.createProgram(applicationContext, R.raw.vertex_shader_two_input,
                 R.raw.fragment_shader_ext_blend);
     }
 
-    @Override protected void getGLSLValues() {
+    @Override
+    protected void getGLSLValues() {
         super.getGLSLValues();
         maExtraTextureCoordLoc = GLES20.glGetAttribLocation(mProgramHandle, "aExtraTextureCoord");
         muExtraTextureLoc = GLES20.glGetUniformLocation(mProgramHandle, "uExtraTexture");
     }
 
-    @Override protected void bindTexture(int textureId) {
+    @Override
+    protected void bindTexture(int textureId) {
         super.bindTexture(textureId);
         GLES20.glActiveTexture(GLES20.GL_TEXTURE1);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mExtraTextureId);
@@ -44,7 +50,7 @@ public class CameraFilterBlend extends CameraFilter {
 
     @Override
     protected void bindGLSLValues(float[] mvpMatrix, FloatBuffer vertexBuffer, int coordsPerVertex,
-            int vertexStride, float[] texMatrix, FloatBuffer texBuffer, int texStride) {
+                                  int vertexStride, float[] texMatrix, FloatBuffer texBuffer, int texStride) {
         super.bindGLSLValues(mvpMatrix, vertexBuffer, coordsPerVertex, vertexStride, texMatrix,
                 texBuffer, texStride);
         GLES20.glEnableVertexAttribArray(maExtraTextureCoordLoc);
@@ -52,13 +58,15 @@ public class CameraFilterBlend extends CameraFilter {
                 texBuffer);
     }
 
-    @Override protected void unbindGLSLValues() {
+    @Override
+    protected void unbindGLSLValues() {
         super.unbindGLSLValues();
 
         GLES20.glDisableVertexAttribArray(maExtraTextureCoordLoc);
     }
 
-    @Override protected void unbindTexture() {
+    @Override
+    protected void unbindTexture() {
         super.unbindTexture();
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
     }

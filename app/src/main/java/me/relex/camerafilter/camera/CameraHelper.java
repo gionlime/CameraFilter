@@ -3,6 +3,7 @@ package me.relex.camerafilter.camera;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.view.View;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -10,7 +11,7 @@ public class CameraHelper {
 
     //
     public static Camera.Size getOptimalPreviewSize(Camera.Parameters parameters,
-            Camera.Size pictureSize, int viewHeight) {
+                                                    Camera.Size pictureSize, int viewHeight) {
 
         if (parameters == null || pictureSize == null) {
             return null;

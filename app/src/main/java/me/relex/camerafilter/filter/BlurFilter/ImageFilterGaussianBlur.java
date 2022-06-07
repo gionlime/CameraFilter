@@ -1,6 +1,7 @@
 package me.relex.camerafilter.filter.BlurFilter;
 
 import android.content.Context;
+
 import me.relex.camerafilter.filter.CameraFilter;
 import me.relex.camerafilter.filter.FilterGroup;
 

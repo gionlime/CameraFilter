@@ -1,7 +1,7 @@
 #extension GL_OES_EGL_image_external : require
 #define KERNEL_SIZE 9
 
-precision highp float; //指定默认精度
+precision highp float;//指定默认精度
 
 varying vec2 vTextureCoord;
 uniform samplerExternalOES uTexture;

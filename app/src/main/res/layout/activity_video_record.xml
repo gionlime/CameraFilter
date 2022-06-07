@@ -6,22 +6,22 @@
     <me.relex.camerafilter.widget.CameraSurfaceView
         android:id="@+id/camera"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
 
     <LinearLayout
-        android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
         android:orientation="horizontal">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/filter_normal"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="48dp"
-            android:text="@string/filter_normal"
-            android:gravity="center"/>
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/filter_normal" />
 
         <!--<android.support.v7.widget.AppCompatButton-->
         <!--android:id="@+id/filter_blend"-->
@@ -34,27 +34,27 @@
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/filter_tone_curve"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="48dp"
-            android:text="@string/filter_tone_curve"
-            android:gravity="center"/>
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/filter_tone_curve" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/filter_soft_light"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="48dp"
-            android:text="@string/filter_soft_light"
-            android:gravity="center"/>
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/filter_soft_light" />
 
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/record"
             android:layout_width="0dp"
-            android:layout_weight="1"
             android:layout_height="48dp"
-            android:text="@string/record_start"
-            android:gravity="center"/>
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/record_start" />
 
 
     </LinearLayout>

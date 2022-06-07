@@ -5,8 +5,10 @@ import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
 import me.relex.camerafilter.filter.FilterManager;
 import me.relex.camerafilter.gles.FullFrameRect;
 import me.relex.camerafilter.gles.GlUtil;
@@ -14,12 +16,10 @@ import me.relex.camerafilter.gles.GlUtil;
 public class ImageRenderer implements GLSurfaceView.Renderer {
 
     private final Context mContext;
+    private final float[] mSTMatrix = new float[16];
     private FilterManager.FilterType mCurrentFilterType;
     private FilterManager.FilterType mNewFilterType;
-
     private int mTextureId = GlUtil.NO_TEXTURE;
-    private final float[] mSTMatrix = new float[16];
-
     private int mSurfaceWidth, mSurfaceHeight;
     private int mIncomingWidth, mIncomingHeight;
 
@@ -30,12 +30,14 @@ public class ImageRenderer implements GLSurfaceView.Renderer {
         mCurrentFilterType = mNewFilterType = filterType;
     }
 
-    @Override public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    @Override
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         Matrix.setIdentityM(mSTMatrix, 0);
         mFullScreen = new FullFrameRect(FilterManager.getImageFilter(mCurrentFilterType, mContext));
     }
 
-    @Override public void onSurfaceChanged(GL10 gl, int width, int height) {
+    @Override
+    public void onSurfaceChanged(GL10 gl, int width, int height) {
         mSurfaceWidth = width;
         mSurfaceHeight = height;
         if (gl != null) {
@@ -64,7 +66,8 @@ public class ImageRenderer implements GLSurfaceView.Renderer {
         mNewFilterType = filterType;
     }
 
-    @Override public void onDrawFrame(GL10 gl) {
+    @Override
+    public void onDrawFrame(GL10 gl) {
 
         if (mTextureId == GlUtil.NO_TEXTURE) {
             Log.e("ImageRenderer", "need setImageBitmap");

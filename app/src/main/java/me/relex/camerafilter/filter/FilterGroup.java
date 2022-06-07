@@ -1,9 +1,11 @@
 package me.relex.camerafilter.filter;
 
 import android.opengl.GLES20;
+
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
 import me.relex.camerafilter.gles.Drawable2d;
 import me.relex.camerafilter.gles.GlUtil;
 
@@ -40,12 +42,14 @@ public class FilterGroup<T extends IFilter> implements IFilter {
         mFilters.add(filter);
     }
 
-    @Override public int getTextureTarget() {
+    @Override
+    public int getTextureTarget() {
         //return GLES11Ext.GL_TEXTURE_EXTERNAL_OES;
         return GLES20.GL_TEXTURE_2D;
     }
 
-    @Override public void setTextureSize(int width, int height) {
+    @Override
+    public void setTextureSize(int width, int height) {
         if (width == 0 || height == 0) {
             return;
         }
@@ -131,9 +135,10 @@ public class FilterGroup<T extends IFilter> implements IFilter {
         }
     }
 
-    @Override public void onDraw(float[] mvpMatrix, FloatBuffer vertexBuffer, int firstVertex,
-            int vertexCount, int coordsPerVertex, int vertexStride, float[] texMatrix,
-            FloatBuffer texBuffer, int textureId, int texStride) {
+    @Override
+    public void onDraw(float[] mvpMatrix, FloatBuffer vertexBuffer, int firstVertex,
+                       int vertexCount, int coordsPerVertex, int vertexStride, float[] texMatrix,
+                       FloatBuffer texBuffer, int textureId, int texStride) {
 
         // TODO
         int size = mFilters.size();
@@ -168,7 +173,8 @@ public class FilterGroup<T extends IFilter> implements IFilter {
         }
     }
 
-    @Override public void releaseProgram() {
+    @Override
+    public void releaseProgram() {
         destroyFrameBuffers();
         for (T filter : mFilters) {
             filter.releaseProgram();

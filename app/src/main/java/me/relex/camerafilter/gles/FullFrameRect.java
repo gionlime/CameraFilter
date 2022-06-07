@@ -34,6 +34,7 @@ package me.relex.camerafilter.gles;
 
 import android.graphics.Bitmap;
 import android.opengl.Matrix;
+
 import me.relex.camerafilter.filter.IFilter;
 
 /**
@@ -41,15 +42,15 @@ import me.relex.camerafilter.filter.IFilter;
  * a texture, usually from an external source like the camera or video decoder.
  */
 public class FullFrameRect {
+    public final float[] IDENTITY_MATRIX = new float[16];
     private final Drawable2d mRectDrawable = new Drawable2d();
     private IFilter mFilter;
-    public final float[] IDENTITY_MATRIX = new float[16];
 
     /**
      * Prepares the object.
      *
      * @param program The program to use.  FullFrameRect takes ownership, and will release
-     * the program when no longer needed.
+     *                the program when no longer needed.
      */
     public FullFrameRect(IFilter program) {
         mFilter = program;

@@ -32,21 +32,18 @@ import android.view.Surface;
  * The EGLContext must only be attached to one thread at a time.  This class is not thread-safe.
  */
 public final class EglCore {
-    private static final String TAG = "EglCore";
-
     /**
      * Constructor flag: surface must be recordable.  This discourages EGL from using a
      * pixel format that cannot be converted efficiently to something usable by the video
      * encoder.
      */
     public static final int FLAG_RECORDABLE = 0x01;
-
     /**
      * Constructor flag: ask for GLES3, fall back to GLES2 if not available.  Without this
      * flag, GLES2 is used.
      */
     public static final int FLAG_TRY_GLES3 = 0x02;
-
+    private static final String TAG = "EglCore";
     // Android-specific extension.
     private static final int EGL_RECORDABLE_ANDROID = 0x3142;
 
@@ -69,7 +66,7 @@ public final class EglCore {
      * <p>
      *
      * @param sharedContext The context to share, or null if sharing is not desired.
-     * @param flags Configuration bit flags, e.g. FLAG_RECORDABLE.
+     * @param flags         Configuration bit flags, e.g. FLAG_RECORDABLE.
      */
     public EglCore(EGLContext sharedContext, int flags) {
         if (mEGLDisplay != EGL14.EGL_NO_DISPLAY) {
@@ -134,9 +131,24 @@ public final class EglCore {
     }
 
     /**
+     * Writes the current display, context, and surface to the log.
+     */
+    public static void logCurrent(String msg) {
+        EGLDisplay display;
+        EGLContext context;
+        EGLSurface surface;
+
+        display = EGL14.eglGetCurrentDisplay();
+        context = EGL14.eglGetCurrentContext();
+        surface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
+        Log.i(TAG, "Current EGL (" + msg + "): display=" + display + ", context=" + context +
+                ", surface=" + surface);
+    }
+
+    /**
      * Finds a suitable EGLConfig.
      *
-     * @param flags Bit flags from constructor.
+     * @param flags   Bit flags from constructor.
      * @param version Must be 2 or 3.
      */
     private EGLConfig getConfig(int flags, int version) {
@@ -193,7 +205,8 @@ public final class EglCore {
         mEGLConfig = null;
     }
 
-    @Override protected void finalize() throws Throwable {
+    @Override
+    protected void finalize() throws Throwable {
         try {
             if (mEGLDisplay != EGL14.EGL_NO_DISPLAY) {
                 // We're limited here -- finalizers don't run on the thread that holds
@@ -336,21 +349,6 @@ public final class EglCore {
      */
     public int getGlVersion() {
         return mGlVersion;
-    }
-
-    /**
-     * Writes the current display, context, and surface to the log.
-     */
-    public static void logCurrent(String msg) {
-        EGLDisplay display;
-        EGLContext context;
-        EGLSurface surface;
-
-        display = EGL14.eglGetCurrentDisplay();
-        context = EGL14.eglGetCurrentContext();
-        surface = EGL14.eglGetCurrentSurface(EGL14.EGL_DRAW);
-        Log.i(TAG, "Current EGL (" + msg + "): display=" + display + ", context=" + context +
-                ", surface=" + surface);
     }
 
     /**
